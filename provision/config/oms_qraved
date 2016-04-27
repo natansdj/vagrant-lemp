@@ -1,0 +1,71 @@
+
+# /home/vagrant/code/provision/config/oms_qraved.conf
+
+server {
+    listen 80;
+    server_name omssite.qraved.com;
+
+    root /var/www/imaginato_oms_oc_platform;
+    index index.php index.html index.htm;
+    access_log /var/www/logs/oms_qraved-site.access.log;
+    error_log /var/www/logs/oms_qraved-site.error.log;
+    client_max_body_size 8m;
+
+
+    rewrite ^/sitemap_index.xml$ /index.php?route=feed/google_sitemap/sitemapIndex;
+    rewrite ^/sitemap\.xml$ /index.php?route=feed/google_sitemap;
+    rewrite ^/sitemap-(.+)\.xml$ /index.php?route=feed/google_sitemap&cityName=$1;
+    rewrite ^/googlebase\.xml$ /index.php?route=feed/google_base;
+
+
+    if (-f $request_filename) {
+        break;
+    }
+
+    location ^~ /admin/view {
+        alias /var/www/imaginato_oms_qraved/admin/view;
+    }
+
+    location ^~ /catalog/view {
+        alias /var/www/imaginato_oms_qraved/catalog/view;
+    }
+
+    location ^~ /download {
+        alias /var/www/imaginato_oms_qraved/download;
+    }
+
+    location /landing {
+        index  index.html index.htm index.php;
+        autoindex on;
+    }
+
+
+    location / {
+        index  index.html index.htm index.php;
+        if (!-e $request_filename) {
+            rewrite ^/(.*)$ /index.php?_route_=$1;
+        }
+        add_header X-Frame-Options SAMEORIGIN;
+    }
+
+    location ~ \.php$ {
+      include fastcgi_params;
+      fastcgi_pass unix:/var/run/php5-fpm.sock;
+      fastcgi_index index.php;
+      fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+
+    location ~* ^.+\.(bmp|jpg|jpeg|gif|css|png|js|ico|woff|ttf)$ {
+        access_log off;
+        expires max;
+    }
+
+    location = /favicon.ico { log_not_found off; access_log off; }
+
+    # deny access to .htaccess files, if Apache's document root
+    # concurs with nginx's one
+    #
+    location ~ /\.ht {
+        deny  all;
+    }
+}

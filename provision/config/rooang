@@ -1,0 +1,49 @@
+
+# /home/vagrant/code/provision/config/rooang.conf
+
+server {
+    listen 80;
+    server_name rooang.dev;
+    
+    root /var/www/imaginato_rooang_oc;
+    index index.php index.html index.htm;
+    access_log /var/www/logs/imaginato_rooang_oc.access.log;
+    error_log /var/www/logs/imaginato_rooang_oc.error.log;
+    client_max_body_size 20m;
+    
+    if (-f $request_filename) {
+        break;
+    }
+    
+    location / {
+        index index.php;
+        #try_files $uri $uri/ /index.php?_route_=$1;
+        if (!-e $request_filename) {
+            rewrite ^/(.*)$ /index.php?_route_=$1 last;
+        }
+    }
+    
+    location /admin/ {
+        index index.php;
+    }
+    
+    location ^~ /image {
+        alias /var/www/imaginato_rooang_oc/image;
+    }
+    
+    location ^~ /catalog/view {
+        alias /var/www/imaginato_rooang_oc/catalog/view;
+    }
+    
+    location ^~ /admin/view {
+        alias /var/www/imaginato_rooang_oc/admin/view;
+    }
+    
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_pass unix:/var/run/php5-fpm.sock;
+        fastcgi_index index.php;
+        fastcgi_read_timeout 300;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+}

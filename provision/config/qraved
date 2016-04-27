@@ -1,0 +1,75 @@
+
+# /home/vagrant/code/provision/config/qraved.conf
+
+server {
+    listen 80;
+    server_name dev.qraved.com m.mob.qraved.com vender.qraved.com oms.qraved.com;
+
+    root /var/www/oc_platform;
+    index index.php index.html index.htm;
+    access_log /var/www/logs/qraved.access.log;
+    error_log /var/www/logs/qraved.error.log;
+    client_max_body_size 20m;
+
+    if (-f $request_filename) {
+        break;
+    }
+
+    rewrite /sitemap_index.xml$ /index.php?route=feed/google_sitemap/sitemapIndex;
+    rewrite /sitemap.xml$ /index.php?route=feed/google_sitemap;
+    rewrite /sitemap-(.+).xml$ /index.php?route=feed/google_sitemap&cityName=$1;
+    rewrite /googlebase.xml$ /index.php?route=feed/google_base;
+    rewrite /catalog/view/theme/default/scripts/qraved/(.*).js$ /index.php?4dfiletype=js&4dfilename=$1 last;
+    rewrite /catalog/view/theme/default/stylesheet/qraved_css/(.*).css$ /index.php?4dfiletype=css&4dfilename=$1 last;
+
+    location / {
+        index index.php;
+        #try_files $uri $uri/ /index.php?_route_=$1;
+        if (!-e $request_filename) {
+            rewrite ^/(.*)$ /index.php?_route_=$1 last;
+        }
+    }
+
+    location /admin/ {
+        index index.php;
+    }
+
+    location /journal/test/ {
+        index index.php;
+        try_files $uri $uri/ /journal/test/index.php?$args;
+    }
+
+    location /journal/ {
+        index index_new.php index.php;
+        try_files $uri $uri/ /journal/index_new.php?$args /journal/index.php?$args;
+    }
+
+    location /journal/wp-admin/ {
+        index index.php;
+        try_files $uri $uri/ /journal/index.php?$args;
+    }
+
+    location ^~ /image {
+        alias /var/www/qraved/image;
+    }
+
+    location ^~ /oms_files {
+        alias /var/www/qraved/oms_files;
+    }
+
+    location ^~ /catalog/view {
+        alias /var/www/qraved/catalog/view;
+    }
+
+    location ^~ /admin/view {
+        alias /var/www/qraved/admin/view;
+    }
+
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_pass unix:/var/run/php5-fpm.sock;
+        fastcgi_index index.php;
+        fastcgi_read_timeout 300;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+}
